@@ -1,0 +1,42 @@
+services:
+    postgres:
+        image: postgres:latest
+        container_name: postgres
+        env_file:
+            - ./src/.env.docker
+        ports:
+            - "5433:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql
+        networks:
+            - backend
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -h "$$POSTGRES_HOST" -p "$$POSTGRES_PORT"',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+    app:
+        build: .
+        image: shorturl-app
+        container_name: app
+        env_file:
+            - ./src/.env.docker
+        ports:
+            - "8000:8000"
+        depends_on:
+            postgres:
+                condition: service_healthy
+        networks:
+            - backend
+        volumes:
+            - .:/app
+
+networks:
+    backend:
+
+volumes:
+    postgres_data:
