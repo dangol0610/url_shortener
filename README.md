@@ -1,110 +1,35 @@
 # URL Shortener
 
-Сервис сокращения ссылок (аналог bitly) на FastAPI + PostgreSQL.
+Сервис сокращения ссылок на FastAPI + PostgreSQL.
 
-## Возможности
+## 📖 О проекте
 
-- ✅ Сокращение длинных ссылок до 8 символов
-- ✅ Редирект на оригинальную ссылку по короткому идентификатору
-- ✅ Подсчёт количества переходов по каждой ссылке
-- ✅ Проверка на дубликаты (одинаковый URL → одинаковый short_id)
-- ✅ Обработка коллизий через добавление соли
+URL Shortener — это аналог bitly для сокращения длинных ссылок. Сервис генерирует короткие уникальные идентификаторы на основе MD5-хеша с обработкой коллизий.
 
-## Технологии
+### Возможности
 
-- **FastAPI** — веб-фреймворк
-- **SQLAlchemy (async)** — ORM для работы с БД
-- **PostgreSQL** — база данных
-- **Alembic** — миграции БД
-- **Pydantic** — валидация данных
-- **Docker + Docker Compose** — контейнеризация
+- ✅ Сокращение ссылок до 8 символов
+- ✅ Редирект на оригинальный URL
+- ✅ Подсчёт переходов
+- ✅ Статистика по ссылке
+- ✅ Проверка на дубликаты
+- ✅ Обработка коллизий через соль
 
-## Архитектура
+### Технологии
 
-```
-src/
-├── app/
-│   ├── models.py       # SQLAlchemy модели
-│   ├── repository.py   # Работа с БД
-│   ├── services.py     # Бизнес-логика
-│   ├── schemas.py      # Pydantic схемы
-│   └── routers.py      # API эндпоинты
-├── routers/
-│   └── api_router.py   # Основной роутер
-├── settings/
-│   └── settings.py     # Настройки приложения
-├── utils/
-│   ├── database.py     # Подключение к БД
-│   ├── dependencies.py # DI зависимости
-│   ├── exceptions.py   # Кастомные исключения
-│   └── hashurl_utils.py # Утилиты для генерации short_url
-├── tests/              # Тесты
-└── main.py             # Точка входа
-```
-
-## API Endpoints
-
-### POST /api/shorten
-
-Сократить URL.
-
-**Request:**
-```json
-{
-    "url": "https://example.com/very/long/path?param=value"
-}
-```
-
-**Response:**
-```json
-{
-    "short_id": "a3f5c2d8",
-    "original_url": "https://example.com/very/long/path?param=value",
-    "redirect_count": 0
-}
-```
+| Технология | Назначение |
+|------------|------------|
+| FastAPI | Веб-фреймворк |
+| SQLAlchemy (async) | ORM |
+| PostgreSQL | База данных |
+| Alembic | Миграции |
+| Pydantic | Валидация |
+| Docker | Контейнеризация |
+| pytest | Тестирование |
 
 ---
 
-### GET /api/{short_id}
-
-Редирект на оригинальную ссылку.
-
-**Request:**
-```
-GET /api/a3f5c2d8
-```
-
-**Response:**
-```
-HTTP/1.1 302 Found
-Location: https://example.com/very/long/path?param=value
-```
-
----
-
-### GET /api/stats/{short_id}
-
-Получить статистику по ссылке.
-
-**Request:**
-```
-GET /api/stats/a3f5c2d8
-```
-
-**Response:**
-```json
-{
-    "short_id": "a3f5c2d8",
-    "original_url": "https://example.com/very/long/path?param=value",
-    "redirect_count": 42,
-    "created_at": "2026-03-04T12:00:00"
-}
-```
-
----
-
-## Запуск
+## 🚀 Запуск
 
 ### Через Docker Compose (рекомендуется)
 
@@ -116,7 +41,7 @@ docker-compose up --build
 docker-compose down
 ```
 
-Сервис доступен по адресу: http://localhost:8000
+Сервис доступен: http://localhost:8000
 
 ### Локальная разработка
 
@@ -124,77 +49,225 @@ docker-compose down
 # Установка зависимостей
 uv sync
 
-# Активация виртуального окружения
+# Активация окружения
 source .venv/bin/activate
 
-# Запуск миграций
+# Применение миграций
 alembic upgrade head
 
 # Запуск сервера
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn src.main:app --reload
 ```
 
-## Переменные окружения
+---
 
-Файл `.env` (локальный) и `.env.docker` (для Docker):
+## 🏗 Архитектура
+
+```
+src/
+├── app/
+│   ├── models.py       # SQLAlchemy модели
+│   ├── repository.py   # Доступ к БД
+│   ├── services.py     # Бизнес-логика
+│   ├── schemas.py      # Pydantic схемы
+│   └── routers.py      # API endpoints
+├── routers/
+│   └── api_router.py   # Основной роутер
+├── settings/
+│   └── settings.py     # Конфигурация
+├── utils/
+│   ├── database.py     # Подключение к БД
+│   ├── dependencies.py # DI зависимости
+│   ├── exceptions.py   # Исключения
+│   └── hashurl_utils.py # Генерация short_url
+├── tests/
+│   ├── conftest.py     # Фикстуры
+│   ├── test_hashurl_utils.py
+│   ├── test_repository.py
+│   └── test_services.py
+└── main.py
+```
+
+### Слои приложения
+
+```
+┌─────────────────┐
+│     Router      │ ← HTTP слой (FastAPI)
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│     Service     │ ← Бизнес-логика
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│    Repository   │ ← Доступ к БД
+└────────┬────────┘
+         ↓
+┌─────────────────┐
+│    Database     │ ← PostgreSQL
+└─────────────────┘
+```
+
+### Dependency Injection
+
+```python
+# src/utils/dependencies.py
+SessionDependency = Annotated[AsyncSession, Depends(get_session)]
+RepositoryDependency = Annotated[URLRepository, Depends(get_repository)]
+ServiceDependency = Annotated[URLService, Depends(get_service)]
+```
+
+**Цепочка:** `Endpoint → Service → Repository → Database`
+
+---
+
+## 📡 API
+
+### POST /api/shorten
+
+Сократить URL.
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/long"}'
+```
+
+**Response (201):**
+```json
+{
+  "short_url": "a3f5c2d8",
+  "original_url": "https://example.com/long",
+  "redirect_count": 0
+}
+```
+
+---
+
+### GET /api/{short_id}
+
+Редирект на оригинальный URL.
+
+**Request:**
+```bash
+curl -I http://localhost:8000/api/a3f5c2d8
+```
+
+**Response (302):**
+```
+HTTP/1.1 302 Found
+Location: https://example.com/long
+```
+
+---
+
+### GET /api/stats/{short_id}
+
+Статистика по ссылке.
+
+**Request:**
+```bash
+curl http://localhost:8000/api/stats/a3f5c2d8
+```
+
+**Response (200):**
+```json
+{
+  "short_url": "a3f5c2d8",
+  "redirect_count": 42,
+  "created_at": "2026-03-04T12:00:00"
+}
+```
+
+---
+
+## 🧪 Тестирование
+
+```bash
+# Запуск всех тестов
+pytest
+
+# Запуск с выводом coverage
+pytest --cov=src --cov-report=term-missing
+
+# Запуск по файлам
+pytest src/tests/test_services.py -v
+pytest src/tests/test_repository.py -v
+pytest src/tests/test_hashurl_utils.py -v
+```
+
+### Структура тестов
+
+| Файл | Тесты | Описание |
+|------|-------|----------|
+| `test_hashurl_utils.py` | 5 | Генерация short_url, коллизии |
+| `test_repository.py` | 5 | CRUD операции с БД |
+| `test_services.py` | 8 | Бизнес-логика, ошибки |
+| **Всего** | **18** | **100% passed** |
+
+### Фикстуры (conftest.py)
+
+```python
+mock_session      # mock SQLAlchemy сессии
+mock_repository   # mock URLRepository
+service           # URLService с mock repository
+mock_url_model    # mock модели ShortURL
+```
+
+---
+
+## ⚙️ Переменные окружения
+
+### .env (локальный)
 
 ```env
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=urls_db
-POSTGRES_HOST=localhost      # или postgres для Docker
-POSTGRES_PORT=5433           # или 5432 для Docker
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5433
 ```
 
-## Тесты
+### .env.docker (для Docker)
 
-```bash
-# Запуск тестов
-pytest
-
-# Запуск с покрытием
-pytest --cov=src
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=urls_db
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
 ```
 
-## Алгоритм сокращения ссылок
+---
 
-1. Проверяем, нет ли уже такой ссылки в БД (детерминированность)
-2. Генерируем MD5 хеш от URL → первые 8 символов
-3. Проверяем на коллизию с другими URL
-4. Если коллизия → добавляем случайную соль и хешируем снова
-5. Сохраняем в БД
+## 🔧 Алгоритм сокращения
 
-**Пример:**
-```
+1. **Проверка дубликата** — если URL уже есть, возвращаем существующий short_url
+2. **Генерация хеша** — MD5 от URL → первые 8 символов
+3. **Проверка коллизии** — если short_url занят другим URL
+4. **Добавление соли** — `url + random_salt` → новый хеш
+5. **Сохранение в БД**
+
+```python
+# Пример
 "https://example.com" → MD5 → "a3f5c2d8..."
 Короткий URL: "a3f5c2d8"
 ```
 
-## Production-особенности
+---
 
-### Обработка коллизий
+## 📝 Миграции
 
-При коллизии хешей добавляется случайная соль:
+```bash
+# Создать новую миграцию
+alembic revision --autogenerate -m "Description"
 
-```python
-salted = url + secrets.token_hex(4)
-short_url = hashlib.md5(salted.encode()).hexdigest()[:8]
+# Применить миграции
+alembic upgrade head
+
+# Откатить
+alembic downgrade -1
 ```
 
-### Dependency Injection
-
-Используется многослойный DI:
-
-```
-Endpoint → Service → Repository → Database
-```
-
-Каждый слой получает зависимости через `Depends()`.
-
-### Асинхронность
-
-Все операции с БД асинхронные через `asyncpg`.
-
-## Лицензия
-
-MIT
+---
